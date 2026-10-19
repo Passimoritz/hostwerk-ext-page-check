@@ -1,0 +1,133 @@
+{
+  "Broken links and images": "Kaputte Links und Bilder",
+  "Page check": "Seiten-Check",
+  "How fast is the page, what do search engines see and can everyone use it? With concrete tips.": "Wie schnell ist die Seite, was sehen Suchmaschinen und können alle sie bedienen? Mit konkreten Tipps.",
+  "Check": "Prüfen",
+  "Your web servers:": "Deine Webserver:",
+  "Checked before:": "Schon geprüft:",
+  "The check reads the HTML your server sends – like a search engine. Pages that only appear through JavaScript show fewer results here.": "Die Prüfung liest das HTML, das dein Server schickt – wie eine Suchmaschine. Seiten, die erst per JavaScript entstehen, zeigen hier weniger.",
+  "Total": "Gesamt",
+  "needs work": "verbesserungswürdig",
+  "Address of the page": "Adresse der Seite",
+  "No check yet": "Noch keine Prüfung",
+  "Enter the address of a page of your project or pick one of your web servers above.": "Gib die Adresse einer Seite deines Projekts ein oder wähle oben einen deiner Webserver.",
+  "Speed": "Geschwindigkeit",
+  "Search engines": "Suchmaschinen",
+  "Accessibility": "Barrierefreiheit",
+  "That is not a valid address (it must start with http:// or https://).": "Das ist keine gültige Adresse (sie muss mit http:// oder https:// beginnen).",
+  "Only http:// and https:// addresses are supported.": "Nur http://- und https://-Adressen werden unterstützt.",
+  "$patterns": [
+    [
+      "The page answers with status {}",
+      "Die Seite antwortet mit Status {}"
+    ],
+    [
+      "{} of {} links and images on this site work",
+      "{} von {} Links und Bildern dieser Seite funktionieren"
+    ],
+    [
+      "First byte after {} ms",
+      "Erstes Byte nach {} ms"
+    ],
+    [
+      "Page loaded in {} ms",
+      "Seite geladen in {} ms"
+    ],
+    [
+      "HTML size {} KB",
+      "HTML-Größe {} KB"
+    ],
+    [
+      "Compressed ({})",
+      "Komprimiert ({})"
+    ],
+    [
+      "{} blocking script(s) in the head",
+      "{} blockierende(s) Skript(e) im Kopf"
+    ],
+    [
+      "{} of {} images with width and height",
+      "{} von {} Bildern mit Breite und Höhe"
+    ],
+    [
+      "Title: “{}”",
+      "Titel: „{}“"
+    ],
+    [
+      "Description with {} characters",
+      "Beschreibung mit {} Zeichen"
+    ],
+    [
+      "{} main heading(s) (h1)",
+      "{} Hauptüberschrift(en) (h1)"
+    ],
+    [
+      "Page language: {}",
+      "Seitensprache: {}"
+    ],
+    [
+      "{} of {} images with alt text",
+      "{} von {} Bildern mit Alternativtext"
+    ],
+    [
+      "{} of {} form fields with a label",
+      "{} von {} Formularfeldern mit Beschriftung"
+    ],
+    [
+      "{} link(s) with vague text (“here”, “more”)",
+      "{} Link(s) mit ungenauem Text („hier“, „mehr“)"
+    ],
+    [
+      "{} button(s) without a name",
+      "{} Knopf/Knöpfe ohne Namen"
+    ],
+    [
+      "Status {} · {} ms to the first byte · {} ms in total · {} KB",
+      "Status {} · {} ms bis zum ersten Byte · {} ms insgesamt · {} KB"
+    ],
+    [
+      "Score over the last {} checks",
+      "Punkte der letzten {} Prüfungen"
+    ],
+    [
+      "{}: {} / 100",
+      "{}: {} / 100"
+    ]
+  ],
+  "passed": "bestanden",
+  "no answer": "keine Antwort",
+  "Nothing answers at this address – is the web server running?": "Unter dieser Adresse antwortet nichts – läuft der Webserver?",
+  "The page did not answer in time.": "Die Seite hat nicht rechtzeitig geantwortet.",
+  "The server needs long before it answers – look at slow database queries or missing caching (the Profiler extension helps).": "Der Server braucht lange, bis er antwortet – sieh dir langsame Datenbank-Abfragen oder fehlendes Caching an (die Erweiterung Leistungs-Messung hilft).",
+  "The page takes long to load – make it smaller or faster on the server.": "Die Seite lädt lange – mach sie kleiner oder auf dem Server schneller.",
+  "The HTML is large – move big inline scripts/styles into files and load lists in parts.": "Das HTML ist groß – lagere große eingebettete Skripte/Styles in Dateien aus und lade Listen in Teilen.",
+  "Not compressed": "Nicht komprimiert",
+  "Switch on gzip or Brotli in the web server – the page gets 60–80 % smaller on the way.": "Schalte gzip oder Brotli im Webserver ein – die Seite wird unterwegs 60–80 % kleiner.",
+  "Add defer (or async) to scripts in the head, so the page can show before they are loaded.": "Ergänze defer (oder async) bei Skripten im Kopf, damit die Seite erscheint, bevor sie geladen sind.",
+  "Give images width and height – then the page does not jump while loading.": "Gib Bildern width und height – dann springt die Seite beim Laden nicht.",
+  "No title": "Kein Titel",
+  "A title of 10–65 characters that says what the page is about – it is the blue line in search results.": "Ein Titel mit 10–65 Zeichen, der sagt, worum es geht – das ist die blaue Zeile in den Suchergebnissen.",
+  "No description": "Keine Beschreibung",
+  "Add <meta name=\"description\" content=\"…\"> with 50–160 characters – search engines often show it under the title.": "Ergänze <meta name=\"description\" content=\"…\"> mit 50–160 Zeichen – Suchmaschinen zeigen sie oft unter dem Titel.",
+  "Use exactly one <h1> per page with the main topic.": "Nutze genau eine <h1> je Seite mit dem Hauptthema.",
+  "Canonical link": "Canonical-Link",
+  "Add <link rel=\"canonical\" href=\"…\"> so search engines know the main address of the page.": "Ergänze <link rel=\"canonical\" href=\"…\">, damit Suchmaschinen die Hauptadresse der Seite kennen.",
+  "Preview for social networks (Open Graph)": "Vorschau für soziale Netze (Open Graph)",
+  "Add og:title, og:description and og:image – then shared links show a nice preview.": "Ergänze og:title, og:description und og:image – dann zeigen geteilte Links eine schöne Vorschau.",
+  "Page is hidden from search engines (noindex)": "Seite ist vor Suchmaschinen versteckt (noindex)",
+  "Visible to search engines": "Für Suchmaschinen sichtbar",
+  "The page says “noindex” – fine for a test site, remove it before going live.": "Die Seite sagt „noindex“ – gut für eine Testseite, vor dem Livegang entfernen.",
+  "Viewport for phones": "Viewport fürs Handy",
+  "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> – otherwise phones show the desktop page tiny.": "Ergänze <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> – sonst zeigen Handys die Desktop-Seite winzig.",
+  "No page language": "Keine Seitensprache",
+  "Add lang=\"de\" (or your language) to <html> – screen readers then read with the right pronunciation.": "Ergänze lang=\"de\" (oder deine Sprache) bei <html> – Screenreader lesen dann mit der richtigen Aussprache.",
+  "Give every image an alt text (empty alt=\"\" for pure decoration) – for screen readers and when images do not load.": "Gib jedem Bild einen Alternativtext (leeres alt=\"\" bei reiner Deko) – für Screenreader und wenn Bilder nicht laden.",
+  "Connect every field to a <label for=\"…\"> (or aria-label) – a placeholder is not a label.": "Verbinde jedes Feld mit einem <label for=\"…\"> (oder aria-label) – ein Platzhalter ist keine Beschriftung.",
+  "Link texts should say where they lead (“Opening hours” instead of “here”).": "Linktexte sollten sagen, wohin sie führen („Öffnungszeiten“ statt „hier“).",
+  "Buttons with only an icon need aria-label=\"…\" – otherwise screen readers just say “button”.": "Knöpfe nur mit Symbol brauchen aria-label=\"…\" – sonst sagen Screenreader nur „Schaltfläche“.",
+  "Zooming is switched off": "Zoomen ist ausgeschaltet",
+  "Zooming allowed": "Zoomen erlaubt",
+  "Remove user-scalable=no / maximum-scale=1 – people with poor eyesight need to zoom.": "Entferne user-scalable=no / maximum-scale=1 – Menschen mit schlechten Augen müssen zoomen können.",
+  "Fix this first – the page itself is broken.": "Zuerst das beheben – die Seite selbst ist kaputt.",
+  "Fix or remove the broken links below.": "Repariere oder entferne die kaputten Links unten."
+}
