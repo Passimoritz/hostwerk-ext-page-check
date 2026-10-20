@@ -108,7 +108,7 @@ async function check(url, { fetchFn = fetch, links = true } = {}) {
   const t0 = Date.now();
   let res;
   try { res = await fetchFn(u.toString(), { headers: { 'user-agent': 'Hostwerk page check', 'accept-encoding': 'gzip, deflate, br' }, redirect: 'follow', signal: AbortSignal.timeout(30000) }); } catch (e) {
-    throw Object.assign(new Error(/ECONNREFUSED|fetch failed/.test(String(e && (e.cause && e.cause.code || e.message))) ? 'Nothing answers at this address – is the web server running?' : 'The page did not answer in time.'), { status: 502 });
+    throw Object.assign(new Error(/ECONNREFUSED|fetch failed/.test(String(e && (e.cause && e.cause.code || e.message))) ? 'Nothing answers at this address – is the web server running?' : 'The page did not answer in time.'), { status: 409 });
   }
   const ttfbMs = Date.now() - t0;
   const buf = Buffer.from(await res.arrayBuffer());
