@@ -6,10 +6,10 @@
     "en": "Page check"
   },
   "description": {
-    "de": "Prüft Seiten deiner Web-Projekte: Ladezeit, Größe, Komprimierung, SEO-Angaben (Titel, Beschreibung, Überschriften), Grundlagen der Barrierefreiheit (Sprache, Bildtexte, Beschriftungen) und kaputte Links auf derselben Seite – mit Punktzahl, konkreten Tipps und Verlauf.",
-    "en": "Checks pages of your web projects: load time, size, compression, SEO basics (title, description, headings), accessibility basics (language, image texts, labels) and broken links on the same site – with a score, concrete tips and history."
+    "de": "Prüft Seiten deiner Web-Projekte – einzeln oder die ganze Website: Ladezeit, Größe, Komprimierung, SEO (Titel, Beschreibung, Überschriften, robots.txt, Sitemap), Barrierefreiheit (Sprache, Bildtexte, Beschriftungen, Überschriften-Reihenfolge), Sicherheits-Kopfzeilen (HTTPS, HSTS, CSP …) und kaputte Links – mit Punktzahl, konkreten Tipps, Verlauf, regelmäßiger Prüfung und Mindestpunktzahl vor dem Veröffentlichen.",
+    "en": "Checks pages of your web projects – one at a time or the whole website: load time, size, compression, SEO (title, description, headings, robots.txt, sitemap), accessibility (language, image texts, labels, heading order), security headers (HTTPS, HSTS, CSP …) and broken links – with a score, concrete tips, history, regular checks and a minimum score before publishing."
   },
-  "version": "1.0.2",
+  "version": "1.1.0",
   "author": "Hostwerk",
   "homepage": "https://github.com/Passimoritz/hostwerk-ext-page-check",
   "license": "MIT",
@@ -27,11 +27,39 @@
       "en": "Page check"
     },
     "description": {
-      "de": "Geschwindigkeit, SEO und Barrierefreiheit deiner Seiten prüfen.",
-      "en": "Check speed, SEO and accessibility of your pages."
+      "de": "Geschwindigkeit, SEO, Barrierefreiheit und Sicherheit deiner Seiten prüfen.",
+      "en": "Check speed, SEO, accessibility and security of your pages."
     },
-    "icon": "file-search"
+    "icon": "file-search",
+    "nav": {
+      "group": "develop",
+      "after": "projects"
+    }
   },
   "backend": "server/index.js",
-  "ui": "ui/index.js"
+  "ui": "ui/index.js",
+  "provides": [
+    "pageCheck"
+  ],
+  "synergies": [
+    {
+      "with": "static-publish",
+      "title": {
+        "de": "Prüft die Seite vor dem Veröffentlichen (Mindestpunktzahl)",
+        "en": "Checks the page before publishing (minimum score)"
+      }
+    },
+    {
+      "with": "profiler",
+      "title": {
+        "de": "Langsame Seite? Der Profiler zeigt, welche Funktion die Zeit braucht",
+        "en": "Slow page? The profiler shows which function takes the time"
+      }
+    }
+  ],
+  "allowExtensions": {
+    "*": [
+      "tabs"
+    ]
+  }
 }
