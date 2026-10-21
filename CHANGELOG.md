@@ -1,3 +1,7 @@
+## 1.1.1
+
+- Lives where it belongs: the tab of every project and web server – no own sidebar entry any more (Hostwerk 3.0+); the full page stays under Extensions → Open and can be pinned in the sidebar settings. / Steckt jetzt dort, wo sie hingehört: Reiter jedes Projekts und Webservers – kein eigener Seitenleisten-Eintrag mehr (Hostwerk 3.0+); die ganze Seite bleibt unter Erweiterungen → Öffnen und lässt sich in den Seitenleisten-Einstellungen anheften.
+
 ## 1.1.0
 
 - New area “Security”: HTTPS (local test addresses excepted), HSTS, Content Security Policy, X-Content-Type-Options, Referrer-Policy and protection against framing. / Neuer Bereich „Sicherheit“: HTTPS (außer lokalen Testadressen), HSTS, Content Security Policy, X-Content-Type-Options, Referrer-Policy und Schutz vor Einbetten.

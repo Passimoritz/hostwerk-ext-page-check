@@ -10,6 +10,7 @@ Checks pages of your web projects – one at a time or the whole website: speed,
 
 ## What it does
 
+- **Where:** the tab of every project and web server – no own sidebar entry since 1.1.1; the full page stays under Extensions → Open
 - Load time (first byte and total), page size and compression
 - SEO: title, description, one main heading, canonical link, social preview, robots.txt (and whether it locks out search engines), sitemap.xml
 - Accessibility basics: page language, image texts, form labels, link texts, heading order (h1 first, no skipped levels)

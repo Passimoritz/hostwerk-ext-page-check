@@ -10,6 +10,7 @@ Prüft Seiten deiner Web-Projekte – einzeln oder die ganze Website: Geschwindi
 
 ## Was sie kann
 
+- **Wo:** Reiter jedes Projekts und Webservers – seit 1.1.1 ohne eigenen Seitenleisten-Eintrag; die ganze Seite bleibt unter Erweiterungen → Öffnen
 - Ladezeit (erstes Byte und gesamt), Seitengröße und Komprimierung
 - SEO: Titel, Beschreibung, eine Hauptüberschrift, Canonical-Link, Vorschau für soziale Netze, robots.txt (und ob sie Suchmaschinen aussperrt), sitemap.xml
 - Barrierefreiheit-Grundlagen: Seitensprache, Bildtexte, Beschriftungen von Feldern, Linktexte, Reihenfolge der Überschriften (zuerst h1, keine Stufe übersprungen)
