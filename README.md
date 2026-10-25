@@ -4,7 +4,7 @@
 
 Checks pages of your web projects – one at a time or the whole website: speed, SEO, accessibility, security headers and broken links – with a score, concrete tips, history, regular checks and a minimum score before publishing.
 
-[Deutsch](README.de.md) · An official [Hostwerk](https://github.com/Passimoritz/hostwerk-public) extension (SDK 2.7, native extension)
+[Deutsch](README.de.md) · An official [Hostwerk](https://github.com/Passimoritz/hostwerk-public) extension (native extension, Hostwerk 2.10 or newer)
 
 ![Screenshot](docs/screenshot.png)
 

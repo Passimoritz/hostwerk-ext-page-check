@@ -4,7 +4,7 @@
 
 Prüft Seiten deiner Web-Projekte – einzeln oder die ganze Website: Geschwindigkeit, SEO, Barrierefreiheit, Sicherheits-Kopfzeilen und kaputte Links – mit Punktzahl, konkreten Tipps, Verlauf, regelmäßiger Prüfung und Mindestpunktzahl vor dem Veröffentlichen.
 
-[English](README.md) · Eine offizielle [Hostwerk](https://github.com/Passimoritz/hostwerk-public) Erweiterung (SDK 2.7, native Erweiterung)
+[English](README.md) · Offizielle [Hostwerk](https://github.com/Passimoritz/hostwerk-public)-Erweiterung (native Erweiterung, ab Hostwerk 2.10)
 
 ![Screenshot](docs/screenshot.de.png)
 
