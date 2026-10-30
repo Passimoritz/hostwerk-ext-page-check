@@ -60,7 +60,7 @@
   "Send Strict-Transport-Security: max-age=31536000 – then browsers only ever use HTTPS for your site.": "Strict-Transport-Security: max-age=31536000 mitschicken – dann nutzen Browser für deine Seite nur noch HTTPS.",
   "Local test address – HTTPS not needed yet": "Lokale Testadresse – HTTPS noch nicht nötig",
   "Page is served without HTTPS": "Seite kommt ohne HTTPS",
-  "Switch on HTTPS (certificate under Live → Domains & HTTPS) and redirect http:// to https://.": "HTTPS einschalten (Zertifikat unter Livebetrieb → Domains & HTTPS) und http:// auf https:// weiterleiten.",
+  "Switch on HTTPS (certificate under Go live → Online → Addresses) and redirect http:// to https://.": "HTTPS einschalten (Zertifikat unter Livebetrieb → Online → Adressen) und http:// auf https:// weiterleiten.",
   "Content Security Policy is set": "Content Security Policy ist gesetzt",
   "No Content Security Policy": "Keine Content Security Policy",
   "A Content-Security-Policy header says which scripts may run – it stops most injected code (XSS). Start with default-src 'self'.": "Ein Content-Security-Policy-Header legt fest, welche Skripte laufen dürfen – das stoppt das meiste eingeschleuste Skript (XSS). Fang mit default-src 'self' an.",

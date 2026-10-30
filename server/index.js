@@ -7,7 +7,7 @@
  *   GET  /api/page-check/history  → ?url=… → the last 30 results of one address
  *   PUT  /api/page-check/config   → { minScore, schedules: [{ url, every: 'day'|'week' }] }
  * For other extensions (host.use('pageCheck')): check(url), gate(url, { min }) – e.g. before publishing a site.
- * Regular checks run in the background; a drop of 5 points or more is reported (toast + watcher in Live → Watchers).
+ * Regular checks run in the background; a drop of 5 points or more is reported (toast + watcher in Go live → Monitoring → Watchers).
  * Data: data/page-check/history.json, sites.json, config.json
  */
 const fs = require('fs');

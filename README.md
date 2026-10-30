@@ -18,7 +18,7 @@ Checks pages of your web projects – one at a time or the whole website: speed,
 - Broken links and images on the same site (up to 40 per page)
 - **Whole website**: follows the links of the site up to N pages (start page included, at most 100) – one row per page, worst first, every link and image checked once
 - Score per area with plain tips, history per address
-- **Regular checks** (daily or weekly) – a drop of 5 points or more shows up as a message and in Live → Watchers
+- **Regular checks** (daily or weekly) – a drop of 5 points or more shows up as a message and in Go live → Monitoring → Watchers
 - **Minimum score before publishing**: other extensions call `host.use('pageCheck').gate(url)` and stop below the score (e.g. “Publish pages”)
 - Tab on every project and in the web server area; sits under “Develop” right after the projects; a shortcut “Check a page” to assign under Settings → General → Shortcuts
 

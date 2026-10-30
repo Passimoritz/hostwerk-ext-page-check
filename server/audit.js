@@ -113,7 +113,7 @@ function rate(page) {
   const https = !!pu && pu.protocol === 'https:';
   const local = !!pu && isLocal(pu.hostname);
   if (https) add('security', /max-age\s*=\s*[1-9]/i.test(H('strict-transport-security')), 2, H('strict-transport-security') ? 'HSTS is set' : 'No HSTS header', 'Send Strict-Transport-Security: max-age=31536000 – then browsers only ever use HTTPS for your site.');
-  else add('security', local, 3, local ? 'Local test address – HTTPS not needed yet' : 'Page is served without HTTPS', 'Switch on HTTPS (certificate under Live → Domains & HTTPS) and redirect http:// to https://.');
+  else add('security', local, 3, local ? 'Local test address – HTTPS not needed yet' : 'Page is served without HTTPS', 'Switch on HTTPS (certificate under Go live → Online → Addresses) and redirect http:// to https://.');
   const csp = H('content-security-policy') || metaEquiv('content-security-policy');
   add('security', !!csp, 2, csp ? 'Content Security Policy is set' : 'No Content Security Policy', 'A Content-Security-Policy header says which scripts may run – it stops most injected code (XSS). Start with default-src \'self\'.');
   add('security', /nosniff/i.test(H('x-content-type-options')), 1, /nosniff/i.test(H('x-content-type-options')) ? 'X-Content-Type-Options: nosniff' : 'No X-Content-Type-Options', 'Send X-Content-Type-Options: nosniff – browsers then never treat an upload as a script.');

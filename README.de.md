@@ -18,7 +18,7 @@ Prüft Seiten deiner Web-Projekte – einzeln oder die ganze Website: Geschwindi
 - Kaputte Links und Bilder auf derselben Seite (bis zu 40 je Seite)
 - **Ganze Website**: folgt den Links der Website bis zu N Seiten (Startseite mitgezählt, höchstens 100) – eine Zeile je Seite, die schlechteste zuerst, jeder Link und jedes Bild einmal geprüft
 - Punkte je Bereich mit verständlichen Tipps, Verlauf je Adresse
-- **Regelmäßige Prüfung** (täglich oder wöchentlich) – fällt die Punktzahl um 5 oder mehr, kommt eine Meldung, dazu ein Eintrag unter Livebetrieb → Wächter
+- **Regelmäßige Prüfung** (täglich oder wöchentlich) – fällt die Punktzahl um 5 oder mehr, kommt eine Meldung, dazu ein Eintrag unter Livebetrieb → Überwachung → Wächter
 - **Mindestpunktzahl vor dem Veröffentlichen**: andere Erweiterungen rufen `host.use('pageCheck').gate(url)` auf und halten unter der Punktzahl an (z. B. „Seiten veröffentlichen“)
 - Reiter auf jedem Projekt und im Webserver-Bereich; steht unter „Entwickeln“ direkt hinter den Projekten; ein Tastenkürzel „Seite prüfen“ lässt sich unter Einstellungen → Allgemein → Tastenkürzel belegen
 
