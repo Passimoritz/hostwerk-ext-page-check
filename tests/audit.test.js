@@ -146,3 +146,36 @@ test('gate before publishing and "worse" for regular checks', async (t) => {
   stop(srv);
   assert.ok(worse({ score: 90 }, { score: 84 }) && !worse({ score: 90 }, { score: 88 }) && !worse(null, { score: 1 }));
 });
+
+test('text details: entities decoded, commented-out markup ignored, big pages stay fast', () => {
+  const r = rate(page(GOOD.replace('Verein Sonnenschein – Termine und Kontakt', 'Caf&eacute; &amp; Bar &#8211; M&uuml;nchen').replace('</body>', '<!-- <h1>alt</h1><a href="/weg">weg</a><img src="/x.png"> --></body>')));
+  assert.strictEqual(r.title, 'Café & Bar – München');
+  assert.ok(!r.links.some((l) => /weg|x\.png/.test(l)), r.links.join());
+  assert.ok(r.checks.find((c) => /main heading/.test(c.text)).ok, 'h1 in a comment does not count');
+  const big = `<html lang="de"><title>Große Seite – Test</title><body><h1>x</h1>${'<p>äöü</p>'.repeat(50000)}${'<a href="#">hier</a><button>x</button>'.repeat(3000)}</body></html>`;
+  const t0 = Date.now(); rate(page(big)); assert.ok(Date.now() - t0 < 10000, `took ${Date.now() - t0} ms`);
+});
+
+test('check: charset, no HTML, credentials in the address, plain error messages', async (t) => {
+  const srv = http.createServer((q, res) => {
+    if (q.url === '/latin1') { res.writeHead(200, { 'content-type': 'text/html; charset=iso-8859-1' }); res.end(Buffer.from('<html><title>Größe und Übermaß</title></html>', 'latin1')); return; }
+    if (q.url === '/data') { res.writeHead(200, { 'content-type': 'application/octet-stream' }); res.end(Buffer.alloc(1000)); return; }
+    if (q.url === '/loop') { res.writeHead(302, { location: '/loop' }); res.end(); return; }
+    res.writeHead(404); res.end();
+  });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  t.after(() => { srv.closeAllConnections(); srv.close(); });
+  const base = `http://127.0.0.1:${srv.address().port}`;
+  assert.strictEqual((await check(`${base}/latin1`, { links: false, files: false })).title, 'Größe und Übermaß');
+  await assert.rejects(check(`${base}/data`), /not return an HTML page/);
+  await assert.rejects(check(`http://user:pw@127.0.0.1:${srv.address().port}/`), /user name and password/);
+  await assert.rejects(check(`${base}/loop`), /redirects in a loop/);
+  for (const k of ['Please leave user name and password out of the address.', 'This address does not return an HTML page (but e.g. an image, a download or data).', 'The page redirects in a loop (too many redirects).', 'This address is unknown – check the spelling (or the hosts entry of a local name).', 'The certificate of this address is not trusted – the page check cannot read the page.']) assert.ok(de[k], k);
+});
+
+test('robots.txt: a group of several user agents including * counts for everyone', async () => {
+  const fake = async (u) => ({ status: /robots/.test(u) ? 200 : 404, text: async () => 'User-agent: *\nUser-agent: Googlebot\nDisallow: /\n' });
+  assert.strictEqual((await siteFiles('http://x.test', fake)).blocked, true);
+  const fake2 = async (u) => ({ status: /robots/.test(u) ? 200 : 404, text: async () => 'User-agent: *\nDisallow: /intern\n\nUser-agent: BadBot\nDisallow: /\n' });
+  assert.strictEqual((await siteFiles('http://x.test', fake2)).blocked, false);
+});

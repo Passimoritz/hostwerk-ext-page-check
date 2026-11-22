@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { FileSearch, Play, CheckCircle2, XCircle, Gauge, Search, Accessibility, Link2Off, History, ShieldCheck, Globe, CalendarClock, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
-import { get, post, put, useApi, waitJob, fmtDate } from '@hostwerk/api';
-import { Btn, Seg, Empty, Loading, Callout, Sparkline, InfoTip, toast } from '@hostwerk/ui';
+import { FileSearch, Play, CheckCircle2, XCircle, Gauge, Search, Accessibility, Link2Off, History, ShieldCheck, Globe, CalendarClock, Trash2, RefreshCw, AlertTriangle, ClipboardCopy, X } from 'lucide-react';
+import { get, post, put, del, useApi, waitJob, fmtDate } from '@hostwerk/api';
+import { Btn, Seg, Empty, Loading, Callout, Sparkline, InfoTip, Switch, toast } from '@hostwerk/ui';
 import { t } from '@hostwerk/i18n';
+import { kbText, toMarkdown, siteMarkdown } from './report.js';
 import './style.css';
 
 /*
@@ -19,7 +20,12 @@ const AREAS = [
   { id: 'security', label: 'Security', icon: ShieldCheck },
 ];
 const tone = (n) => (n >= 90 ? 'ok' : n >= 60 ? 'warn' : 'err');
+/** Adresse lesbar zeigen (/über-uns statt /%C3%BCber-uns). */
+const show = (u) => { try { return decodeURI(u); } catch { return String(u || ''); } };
 const area = (r, id) => (r.areas && r.areas[id] != null ? r.areas[id] : null);
+/** Bericht als Markdown in die Zwischenablage (zum Weitergeben an Kunden oder das Team). */
+const copyReport = async (md) => { try { await navigator.clipboard.writeText(md); toast.success(t('Report copied (Markdown)')); } catch { toast.error(t('Could not copy')); } };
+const mdOpts = () => ({ t, areas: AREAS, when: (x) => fmtDate(x) });
 
 function Ring({ value, label }) {
   const r = 26; const c = 2 * Math.PI * r;
@@ -46,31 +52,38 @@ function Broken({ list }) {
   return (
     <div className="card">
       <div className="card-head"><Link2Off size={16} /><h3>Broken links and images</h3><span className="badge err">{list.length}</span></div>
-      <ul className="pc-broken">{list.map((b) => <li key={b.url}><code className="ellipsis">{b.url}</code><span className="badge err">{b.status || 'No answer'}</span></li>)}</ul>
+      <ul className="pc-broken">{list.map((b) => <li key={b.url}><code className="ellipsis" title={show(b.url)}>{show(b.url)}</code><span className="badge err">{b.status || t('No answer')}</span></li>)}</ul>
     </div>
   );
 }
 
 function Result({ r }) {
   const [hist, setHist] = useState([]);
+  const [onlyBad, setOnlyBad] = useState(false); // nur fehlgeschlagene Prüfungen – schneller zum Handlungsbedarf
+  const bad = r.checks.filter((c) => !c.ok).length;
   useEffect(() => { get(`/page-check/history?url=${encodeURIComponent(r.url)}`).then(setHist).catch(() => setHist([])); }, [r.url, r.t]);
   return (
     <div className="stack">
       <div className="card"><div className="card-body pc-head">
         <Rings r={r} />
         <div className="grow stack pc-meta">
-          <b className="ellipsis">{r.title || r.url}</b>
-          <span className="small muted ellipsis">{r.url}</span>
-          <span className="small muted">Status {r.status} · {r.ttfbMs} ms to the first byte · {r.totalMs} ms in total · {Math.round(r.bytes / 1024)} KB</span>
-          {hist.length > 1 && <div className="row-tight"><History size={13} className="muted" /><Sparkline data={hist.slice().reverse().map((x) => x.score)} /><span className="tiny muted">Score over the last {hist.length} checks</span></div>}
+          <b className="ellipsis" title={r.title || show(r.url)}>{r.title || show(r.url)}</b>
+          <span className="small muted ellipsis" title={show(r.url)}>{show(r.url)}</span>
+          <span className="small muted">{t('Status {status} · {ttfb} ms to the first byte · {total} ms in total · {kb} KB', { status: r.status, ttfb: r.ttfbMs, total: r.totalMs, kb: kbText(r.bytes) })}</span>
+          {hist.length > 1 && <div className="row-tight"><History size={13} className="muted" /><Sparkline data={hist.slice().reverse().map((x) => x.score)} /><span className="tiny muted">{t('Score over the last {n} checks', { n: hist.length })}</span></div>}
+          <div><Btn className="sm ghost pc-copy" icon={ClipboardCopy} onClick={() => copyReport(toMarkdown(r, mdOpts()))}>Copy as report</Btn></div>
         </div>
       </div></div>
+      <div className="row-tight pc-filter">
+        <label className="row-tight small"><Switch checked={onlyBad} onChange={setOnlyBad} /> {t('Only failed checks')}</label>
+        <span className="tiny muted">{bad ? t('{n} of {all} need work', { n: bad, all: r.checks.length }) : t('All checks passed')}</span>
+      </div>
       <div className="grid grid-2">
-        {AREAS.filter((a) => r.checks.some((c) => c.area === a.id)).map((a) => (
+        {AREAS.filter((a) => r.checks.some((c) => c.area === a.id && (!onlyBad || !c.ok))).map((a) => (
           <div key={a.id} className="card">
             <div className="card-head"><a.icon size={16} /><h3>{a.label}</h3><span className={`badge ${tone(area(r, a.id))}`}>{area(r, a.id)}</span></div>
             <ul className="pc-checks">
-              {r.checks.filter((c) => c.area === a.id).map((c, i) => (
+              {r.checks.filter((c) => c.area === a.id && (!onlyBad || !c.ok)).map((c, i) => (
                 <li key={i} className={c.ok ? 'ok' : 'bad'}>
                   {c.ok ? <CheckCircle2 size={15} className="c-ok" aria-label="passed" /> : <XCircle size={15} className="c-err" aria-label="needs work" />}
                   <div><div className="small">{c.text}</div>{c.tip && <div className="tiny muted">{c.tip}</div>}</div>
@@ -92,24 +105,25 @@ function SiteResult({ s, onPick }) {
       <div className="card"><div className="card-body pc-head">
         <Rings r={s} />
         <div className="grow stack pc-meta">
-          <b className="ellipsis">{s.url}</b>
+          <b className="ellipsis" title={show(s.url)}>{show(s.url)}</b>
           <span className="small muted">{t('{n} pages checked · {found} found', { n: s.pages.length, found: s.found })}</span>
           <span className="small muted">{t('{ok} of {all} links and images work', { ok: s.linksChecked - s.broken.length, all: s.linksChecked })}</span>
           <span className="tiny muted">{fmtDate(s.t)}</span>
+          <div><Btn className="sm ghost pc-copy" icon={ClipboardCopy} onClick={() => copyReport(siteMarkdown(s, mdOpts()))}>Copy as report</Btn></div>
         </div>
       </div></div>
       <div className="card">
         <div className="card-head"><Globe size={16} /><h3>Pages of the site</h3></div>
-        <table className="table pc-pages"><thead><tr><th>Page</th><th className="num">Total</th>{AREAS.map((a) => <th key={a.id} className="num">{a.label}</th>)}<th /></tr></thead><tbody>
+        <div className="table-wrap"><table className="table pc-pages"><thead><tr><th>Page</th><th className="num">Total</th>{AREAS.map((a) => <th key={a.id} className="num">{a.label}</th>)}<th /></tr></thead><tbody>
           {s.pages.map((p) => (
             <tr key={p.url}>
-              <td><div className="small ellipsis" title={p.url}>{p.title || p.url.replace(/^https?:\/\/[^/]+/, '') || '/'}</div>{p.failed ? <div className="tiny c-err">{p.failed}</div> : p.status >= 400 ? <div className="tiny c-err">{t('The page answers with status {status}', { status: p.status })}</div> : null}</td>
+              <td><div className="small ellipsis" title={show(p.url)}>{p.title || show(p.url).replace(/^https?:\/\/[^/]+/, '') || '/'}</div>{p.failed ? <div className="tiny c-err">{p.failed}</div> : p.status >= 400 ? <div className="tiny c-err">{t('The page answers with status {status}', { status: p.status })}</div> : null}</td>
               <td className="num">{p.failed ? '–' : <span className={`badge ${tone(p.score)}`}>{p.score}</span>}</td>
               {AREAS.map((a) => <td key={a.id} className="num small">{p.areas ? p.areas[a.id] : '–'}</td>)}
               <td className="right"><Btn className="xs ghost" title="Check this page" aria-label="Check this page" icon={Search} onClick={() => onPick(p.url)} /></td>
             </tr>
           ))}
-        </tbody></table>
+        </tbody></table></div>
       </div>
       <Broken list={s.broken} />
     </div>
@@ -121,7 +135,7 @@ function Settings({ config, url, onSaved }) {
   const [every, setEvery] = useState('week');
   const [min, setMin] = useState(config.minScore || 0);
   useEffect(() => { setMin(config.minScore || 0); }, [config.minScore]);
-  const save = async (next) => { try { onSaved(await put('/page-check/config', next)); toast.success(t('Saved')); } catch (e) { toast.error(e); } };
+  const save = async (next) => { try { const c = await put('/page-check/config', next); onSaved(c); setMin(c.minScore); toast.success(t('Saved')); } catch (e) { toast.error(e); } };
   const has = url && config.schedules.some((x) => x.url === url);
   return (
     <div className="grid grid-2">
@@ -130,7 +144,7 @@ function Settings({ config, url, onSaved }) {
         <div className="card-body stack pc-gap">
           {config.schedules.length === 0 ? <span className="small muted">No regular checks yet.</span> : config.schedules.map((x) => (
             <div key={x.url} className="row-tight">
-              <span className="grow small ellipsis" title={x.url}>{x.url}</span>
+              <span className="grow small ellipsis" title={show(x.url)}>{show(x.url)}</span>
               <span className="badge">{x.every === 'day' ? 'Daily' : 'Weekly'}</span>
               {x.last ? <span className="tiny muted">{t('Checked {when} · {score} points', { when: fmtDate(x.last), score: x.score ?? '–' })}</span> : <span className="tiny muted">Not checked yet</span>}
               <Btn className="xs ghost" icon={Trash2} title="Remove" aria-label="Remove" onClick={() => save({ ...config, schedules: config.schedules.filter((y) => y.url !== x.url) })} />
@@ -148,7 +162,7 @@ function Settings({ config, url, onSaved }) {
         <div className="card-head"><ShieldCheck size={16} /><h3>Before publishing</h3><InfoTip title="Minimum score">Publishing extensions (e.g. “Publish pages”) check the page first and stop below this score. 0 = off.</InfoTip></div>
         <div className="card-body row-tight">
           <label className="small" htmlFor="pc-min">Minimum score</label>
-          <input id="pc-min" className="input pc-min" type="number" min="0" max="100" value={min} onChange={(e) => setMin(e.target.value)} />
+          <input id="pc-min" className="input pc-min" type="number" min="0" max="100" value={min} onChange={(e) => setMin(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') save({ ...config, minScore: Number(min) || 0 }); }} />
           <Btn className="sm" onClick={() => save({ ...config, minScore: Number(min) || 0 })}>Save</Btn>
         </div>
       </div>
@@ -166,28 +180,33 @@ function PageCheckView({ embedded = false, start = '', targets: fixed = null }) 
   const [r, setR] = useState(null);
   const [s, setS] = useState(null);
   const run = async (u = url, m = mode) => {
-    if (!String(u).trim()) return;
+    if (!String(u).trim() || busy) return; // läuft schon – kein zweiter Check per Enter/Chip
     setUrl(u); setBusy(true);
     try {
-      if (m === 'site') { const j = await post('/page-check/site', { url: u, max }); const done = await waitJob(j.job); setS(done.result); setR(null); } else { setR(await post('/page-check/run', { url: u })); setS(null); }
+      if (m === 'site') { const n = Math.max(2, Math.min(100, Math.round(Number(max)) || 20)); setMax(n); const j = await post('/page-check/site', { url: u.trim(), max: n }); const done = await waitJob(j.job); setS(done.result); setR(null); } else { setR(await post('/page-check/run', { url: u.trim() })); setS(null); }
       st.reload({ silent: true });
     } catch (e) { toast.error(e); }
     setBusy(false);
   };
   const d = st.data || { recent: [], targets: [], config: { minScore: 0, schedules: [] }, sites: [] };
+  // Einen Eintrag aus „Schon geprüft“ entfernen (z. B. eine Adresse mit Tippfehler) – samt ihrem Verlauf
+  const forget = async (u) => { try { const n = await del(`/page-check/history?url=${encodeURIComponent(u)}`); st.setData({ ...d, recent: n.recent }); } catch (e) { toast.error(e); } };
   const targets = fixed || d.targets;
   if (st.error && !st.data) return <Empty icon={AlertTriangle} title="Could not load the page check" text={st.error} action={<Btn icon={RefreshCw} onClick={() => st.reload()}>Try again</Btn>} />;
   return (
     <div className="stack">
       <div className={`card ${embedded ? '' : 'mb'}`}><div className="card-body stack pc-gap">
-        <form className="row-tight pc-form" onSubmit={(e) => { e.preventDefault(); run(); }}>
+        {/* Umschalter außerhalb des Formulars: seine Knöpfe sind keine type="button" – Enter löste sonst „Diese Seite“ aus */}
+        <div className="row-tight pc-form">
           <Seg value={mode} onChange={setMode} options={[{ id: 'page', label: 'This page', icon: FileSearch }, { id: 'site', label: 'Whole website', icon: Globe }]} />
-          <input className="input grow mono" value={url} aria-label="Address of the page" placeholder="http://meinprojekt.localhost/" onChange={(e) => setUrl(e.target.value)} />
-          {mode === 'site' && <><input className="input pc-max" type="number" min="2" max="100" value={max} aria-label="Pages to check" title="Pages to check" onChange={(e) => setMax(Number(e.target.value) || 20)} /><InfoTip title="Pages to check">Up to how many pages of the site are checked (start page included).</InfoTip></>}
-          <Btn className="primary" icon={Play} busy={busy} type="submit">{mode === 'site' ? 'Check website' : 'Check'}</Btn>
-        </form>
+          <form className="row-tight pc-form pc-form-main" onSubmit={(e) => { e.preventDefault(); run(); }}>
+            <input className="input grow mono" value={url} aria-label="Address of the page" placeholder="http://meinprojekt.localhost/" onChange={(e) => setUrl(e.target.value)} />
+            {mode === 'site' && <><input className="input pc-max" type="number" min="2" max="100" value={max} aria-label="Pages to check" title="Pages to check" onChange={(e) => setMax(e.target.value)} /><InfoTip title="Pages to check">Up to how many pages of the site are checked (start page included).</InfoTip></>}
+            <Btn className="primary" icon={Play} busy={busy} type="submit">{mode === 'site' ? 'Check website' : 'Check'}</Btn>
+          </form>
+        </div>
         {targets.length > 0 && <div className="row-tight pc-chips"><span className="tiny muted">Your web servers:</span>{targets.slice(0, 10).map((x) => <button type="button" key={x.url} className="chip-btn" title={x.url} onClick={() => run(x.url)}>{x.label}</button>)}</div>}
-        {!fixed && d.recent.length > 0 && <div className="row-tight pc-chips"><span className="tiny muted">Checked before:</span>{d.recent.slice(0, 8).map((x) => <button type="button" key={x.url} className="chip-btn" title={x.url} onClick={() => run(x.url)}>{x.url.replace(/^https?:\/\//, '').slice(0, 40)} · {x.score}</button>)}</div>}
+        {!fixed && d.recent.length > 0 && <div className="row-tight pc-chips"><span className="tiny muted">Checked before:</span>{d.recent.slice(0, 8).map((x) => <span key={x.url} className="pc-chip"><button type="button" className="chip-btn" title={show(x.url)} onClick={() => run(x.url)}>{show(x.url).replace(/^https?:\/\//, '').slice(0, 40)} · {x.score ?? '–'}</button><button type="button" className="pc-chip-x" title={t('Remove from the list')} aria-label={t('Remove {url} from the list', { url: show(x.url) })} onClick={() => forget(x.url)}><X size={11} /></button></span>)}</div>}
         {!embedded && <Callout kind="info" dismissible>The check reads the HTML your server sends – like a search engine. Pages that only appear through JavaScript show fewer results here.</Callout>}
       </div></div>
       {busy && !r && !s ? <Loading text={mode === 'site' ? t('Checking the website …') : undefined} /> : s ? <SiteResult s={s} onPick={(u) => { setMode('page'); run(u, 'page'); }} /> : r ? <Result r={r} /> : st.loading ? <Loading /> : <Empty icon={FileSearch} title="No check yet" text="Enter the address of a page of your project or pick one of your web servers above." />}

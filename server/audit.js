@@ -31,9 +31,16 @@ function parse(html) {
   }
   return tags;
 }
-const strip = (s) => String(s || '').replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+/** Häufige HTML-Entities in Text auflösen (&amp; &auml; &#8211; …) – sonst steht im Titel „Caf&eacute;“. */
+const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', auml: 'ä', ouml: 'ö', uuml: 'ü', Auml: 'Ä', Ouml: 'Ö', Uuml: 'Ü', szlig: 'ß', eacute: 'é', egrave: 'è', agrave: 'à', ndash: '–', mdash: '—', hellip: '…', laquo: '«', raquo: '»', bdquo: '„', ldquo: '“', rdquo: '”', copy: '©', reg: '®', euro: '€' };
+const decode = (s) => String(s || '').replace(/&(#x[0-9a-f]{1,6}|#\d{1,7}|[a-z]{2,8});/gi, (m, e) => {
+  if (e[0] !== '#') return ENT[e] ?? m;
+  const n = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1));
+  try { return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : m; } catch { return m; }
+});
+const strip = (s) => decode(String(s || '').replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 /** Inner text of the element that starts at tag t (until its closing tag). */
-function inner(html, t) { const close = html.toLowerCase().indexOf(`</${t.name}`, t.end); return close < 0 ? '' : strip(html.slice(t.end, close)); }
+function inner(html, t, low = html.toLowerCase()) { const close = low.indexOf(`</${t.name}`, t.end); return close < 0 ? '' : strip(html.slice(t.end, close)); }
 
 /** Points per area (weighted share of passed checks) and the overall score. */
 function scores(checks) {
@@ -47,7 +54,10 @@ function scores(checks) {
  * → { score, areas: { speed, seo, a11y }, checks: [{ area, ok, weight, text, tip }], links: [urls on the same site] }
  */
 function rate(page) {
-  const { html = '', headers = {} } = page;
+  const { headers = {} } = page;
+  // Auskommentiertes zählt nicht (gleich lang ersetzen, damit die Positionen stimmen)
+  const html = String(page.html || '').replace(/<!--[\s\S]*?(-->|$)/g, (m) => ' '.repeat(m.length));
+  const low = html.toLowerCase(); // einmal – nicht je Element (sonst Minuten bei großen Seiten)
   const tags = parse(html);
   const find = (n) => tags.filter((t) => t.name === n);
   const meta = (key) => { const t = find('meta').find((x) => (x.attrs.name || x.attrs.property || '').toLowerCase() === key); return t ? t.attrs.content || '' : null; };
@@ -59,9 +69,9 @@ function rate(page) {
   add('speed', page.totalMs < 2000, 2, `Page loaded in ${page.totalMs} ms`, 'The page takes long to load – make it smaller or faster on the server.');
   add('speed', page.bytes < 500 * 1024, 2, `HTML size ${Math.round(page.bytes / 1024)} KB`, 'The HTML is large – move big inline scripts/styles into files and load lists in parts.');
   const enc = String(headers['content-encoding'] || '');
-  add('speed', /gzip|br|zstd/.test(enc) || page.bytes < 10 * 1024, 2, enc ? `Compressed (${enc})` : 'Not compressed', 'Switch on gzip or Brotli in the web server – the page gets 60–80 % smaller on the way.');
+  add('speed', /gzip|br|zstd/.test(enc) || page.bytes < 10 * 1024, 2, enc ? `Compressed (${enc})` : page.bytes < 10 * 1024 ? 'Not compressed (small enough)' : 'Not compressed', 'Switch on gzip or Brotli in the web server – the page gets 60–80 % smaller on the way.');
   const scripts = find('script').filter((t) => t.attrs.src && !('async' in t.attrs) && !('defer' in t.attrs) && t.attrs.type !== 'module');
-  const headEnd = html.toLowerCase().indexOf('</head>');
+  const headEnd = low.indexOf('</head>');
   const blocking = scripts.filter((t) => headEnd < 0 || t.index < headEnd);
   add('speed', blocking.length === 0, 1, `${blocking.length} blocking script(s) in the head`, 'Add defer (or async) to scripts in the head, so the page can show before they are loaded.');
   const imgs = find('img');
@@ -70,9 +80,9 @@ function rate(page) {
 
   // SEO
   const title = find('title')[0];
-  const titleText = title ? inner(html, title) : '';
+  const titleText = title ? inner(html, title, low) : '';
   add('seo', titleText.length >= 10 && titleText.length <= 65, 3, titleText ? `Title: “${titleText.slice(0, 70)}”` : 'No title', 'A title of 10–65 characters that says what the page is about – it is the blue line in search results.');
-  const desc = meta('description');
+  const desc = meta('description') == null ? null : decode(meta('description'));
   add('seo', desc && desc.length >= 50 && desc.length <= 160, 2, desc ? `Description with ${desc.length} characters` : 'No description', 'Add <meta name="description" content="…"> with 50–160 characters – search engines often show it under the title.');
   const h1 = find('h1');
   add('seo', h1.length === 1, 2, `${h1.length} main heading(s) (h1)`, 'Use exactly one <h1> per page with the main topic.');
@@ -92,9 +102,9 @@ function rate(page) {
   const unlabelled = fields.filter((t) => !t.attrs['aria-label'] && !t.attrs['aria-labelledby'] && !(t.attrs.id && labelFor.has(t.attrs.id)) && !t.attrs.title);
   add('a11y', unlabelled.length === 0, 2, `${fields.length - unlabelled.length} of ${fields.length} form fields with a label`, 'Connect every field to a <label for="…"> (or aria-label) – a placeholder is not a label.');
   const links = find('a');
-  const vague = links.filter((t) => /^(hier|here|mehr|more|klicken|click here|weiter|link)$/i.test(inner(html, t)));
+  const vague = links.filter((t) => /^(hier|here|mehr|more|klicken|click here|weiter|link)$/i.test(inner(html, t, low)));
   add('a11y', vague.length === 0, 1, `${vague.length} link(s) with vague text (“here”, “more”)`, 'Link texts should say where they lead (“Opening hours” instead of “here”).');
-  const emptyBtn = find('button').filter((t) => !inner(html, t) && !t.attrs['aria-label'] && !t.attrs.title);
+  const emptyBtn = find('button').filter((t) => !inner(html, t, low) && !t.attrs['aria-label'] && !t.attrs.title);
   add('a11y', emptyBtn.length === 0, 2, `${emptyBtn.length} button(s) without a name`, 'Buttons with only an icon need aria-label="…" – otherwise screen readers just say “button”.');
   const zoomOff = find('meta').find((t) => (t.attrs.name || '').toLowerCase() === 'viewport' && /user-scalable\s*=\s*no|maximum-scale\s*=\s*1(\.0)?\b/i.test(t.attrs.content || ''));
   add('a11y', !zoomOff, 2, zoomOff ? 'Zooming is switched off' : 'Zooming allowed', 'Remove user-scalable=no / maximum-scale=1 – people with poor eyesight need to zoom.');
@@ -163,19 +173,52 @@ async function siteFiles(origin, fetchFn = fetch) {
     if (robots != null && !/<html/i.test(robots)) {
       out.robots = true;
       // Gruppe für alle (User-agent: *) mit "Disallow: /" sperrt die ganze Seite
-      let all = false;
+      let all = false; let prevUa = false;
       for (const raw of robots.split(/\r?\n/)) {
         const line = raw.replace(/#.*/, '').trim();
         const m = line.match(/^([\w-]+)\s*:\s*(.*)$/); if (!m) continue;
         const k = m[1].toLowerCase(); const v = m[2].trim();
-        if (k === 'user-agent') all = v === '*';
-        else if (k === 'disallow' && all && v === '/') out.blocked = true;
+        if (k === 'user-agent') { all = (prevUa && all) || v === '*'; prevUa = true; continue; }
+        prevUa = false;
+        if (k === 'disallow' && all && v === '/') out.blocked = true;
         else if (k === 'sitemap' && /^https?:\/\//i.test(v) && out.sitemapUrl === `${origin}/sitemap.xml`) out.sitemapUrl = v;
       }
     }
   } catch { /* keine robots.txt */ }
   try { const sm = await text(out.sitemapUrl); out.sitemap = !!sm && /<(urlset|sitemapindex)\b/i.test(sm); } catch { /* keine Sitemap */ }
   return out;
+}
+
+/** Plain message for a failed request (fetch only says "fetch failed" – the reason is in cause.code). */
+function netError(e) {
+  const code = String((e && e.cause && (e.cause.code || e.cause.message)) || '');
+  const msg = String((e && e.message) || '');
+  if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) return 'The page did not answer in time.';
+  if (/ENOTFOUND|EAI_AGAIN/.test(code)) return 'This address is unknown – check the spelling (or the hosts entry of a local name).';
+  if (/CERT|SELF_SIGNED|UNABLE_TO_VERIFY|ERR_TLS/i.test(code)) return 'The certificate of this address is not trusted – the page check cannot read the page.';
+  if (/redirect/i.test(code + msg)) return 'The page redirects in a loop (too many redirects).';
+  if (/ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|fetch failed|terminated|other side closed/i.test(code + msg)) return 'Nothing answers at this address – is the web server running?';
+  return 'The page did not answer in time.';
+}
+/** Read the body, at most max bytes (a huge file must not fill the memory). */
+async function readCapped(res, max) {
+  if (!res.body || typeof res.body.getReader !== 'function') return Buffer.from(await res.arrayBuffer()).subarray(0, max);
+  const reader = res.body.getReader();
+  const parts = []; let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    parts.push(value); n += value.length;
+    if (n >= max) { try { await reader.cancel(); } catch { /* egal */ } break; }
+  }
+  return Buffer.concat(parts).subarray(0, max);
+}
+/** Text in the charset of the page (header or <meta charset>), otherwise UTF-8 – so Latin-1 umlauts stay readable. */
+function decodeHtml(buf, type = '') {
+  const head = buf.subarray(0, 4096).toString('latin1');
+  const cs = (/charset\s*=\s*["']?([\w-]+)/i.exec(type) || /<meta[^>]+charset\s*=\s*["']?([\w-]+)/i.exec(head) || [])[1];
+  if (cs && !/^utf-?8$/i.test(cs)) { try { return new TextDecoder(cs.toLowerCase()).decode(buf); } catch { /* unbekannter Zeichensatz */ } }
+  return buf.toString('utf8');
 }
 
 /**
@@ -185,16 +228,22 @@ async function siteFiles(origin, fetchFn = fetch) {
 async function check(url, { fetchFn = fetch, links = true, files = true } = {}) {
   let u; try { u = new URL(url); } catch { throw Object.assign(new Error('That is not a valid address (it must start with http:// or https://).'), { status: 400 }); }
   if (!/^https?:$/.test(u.protocol)) throw Object.assign(new Error('Only http:// and https:// addresses are supported.'), { status: 400 });
+  // fetch lehnt Adressen mit Zugangsdaten ab – und sie sollen nicht im Verlauf landen
+  if (u.username || u.password) throw Object.assign(new Error('Please leave user name and password out of the address.'), { status: 400 });
   const t0 = Date.now();
   let res;
   try { res = await fetchFn(u.toString(), { headers: { 'user-agent': 'Hostwerk page check', 'accept-encoding': 'gzip, deflate, br' }, redirect: 'follow', signal: AbortSignal.timeout(30000) }); } catch (e) {
-    throw Object.assign(new Error(/ECONNREFUSED|fetch failed/.test(String(e && (e.cause && e.cause.code || e.message))) ? 'Nothing answers at this address – is the web server running?' : 'The page did not answer in time.'), { status: 409 });
+    throw Object.assign(new Error(netError(e)), { status: 409 });
   }
   const ttfbMs = Date.now() - t0;
-  const buf = Buffer.from(await res.arrayBuffer());
-  const totalMs = Date.now() - t0;
   const headers = {}; res.headers.forEach((v, k) => { headers[k] = v; });
-  const html = buf.subarray(0, MAX_HTML).toString('utf8');
+  const type = String(headers['content-type'] || '');
+  // Bild, Download, JSON … ist keine Seite – nicht bewerten (und nicht Hunderte MB laden)
+  if (res.status < 400 && type && !/html|xml/i.test(type)) { try { await res.body?.cancel(); } catch { /* egal */ } throw Object.assign(new Error('This address does not return an HTML page (but e.g. an image, a download or data).'), { status: 400 }); }
+  let buf;
+  try { buf = await readCapped(res, MAX_HTML); } catch (e) { throw Object.assign(new Error(netError(e)), { status: 409 }); }
+  const totalMs = Date.now() - t0;
+  const html = decodeHtml(buf, type);
   const r = rate({ url: res.url || u.toString(), status: res.status, headers, html, ttfbMs, totalMs, bytes: Number(headers['content-length']) || buf.length });
   if (res.status >= 400) r.checks.unshift({ area: 'speed', ok: false, weight: 0, text: `The page answers with status ${res.status}`, tip: 'Fix this first – the page itself is broken.' });
   let broken = [];

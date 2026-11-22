@@ -4,7 +4,7 @@
  *   POST /api/page-check/run      → { url } → result (score, areas, checks with tips, broken links)
  *   POST /api/page-check/site     → { url, max } → { job } – whole website (up to max pages), result in the job
  *   GET  /api/page-check          → { recent, targets, config, sites } – addresses of web servers / virtual hosts / apps
- *   GET  /api/page-check/history  → ?url=… → the last 30 results of one address
+ *   GET  /api/page-check/history  → ?url=… → the last 30 results of one address; DELETE ?url=… → forget that address
  *   PUT  /api/page-check/config   → { minScore, schedules: [{ url, every: 'day'|'week' }] }
  * For other extensions (host.use('pageCheck')): check(url), gate(url, { min }) – e.g. before publishing a site.
  * Regular checks run in the background; a drop of 5 points or more is reported (toast + watcher in Go live → Monitoring → Watchers).
@@ -30,13 +30,21 @@ const due = (schedules, now = Date.now()) => schedules.filter((x) => now - (x.la
 
 function activate(host) {
   const { ctx } = host;
+  // Braucht Hostwerks Innenleben (Recht „native“) – abgeschottet (nicht aus dem Katalog) gibt es ctx nicht
+  if (!ctx || !ctx.paths) throw new Error('Page check only runs as an official package from the Hostwerk catalog (it needs the "native" permission without sandbox).');
   const dir = path.join(ctx.paths.data, 'page-check');
   fs.mkdirSync(dir, { recursive: true });
   const readJson = (name, fb) => { try { return JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8')); } catch { return fb; } };
   const writeJson = (name, v) => { const f = path.join(dir, name); fs.writeFileSync(`${f}.tmp`, JSON.stringify(v)); fs.renameSync(`${f}.tmp`, f); };
   const read = () => readJson('history.json', {});
   const config = () => cleanConfig(readJson('config.json', {}));
-  const remember = (r) => { const h = read(); const before = (h[r.url] || [])[0] || null; h[r.url] = [r, ...(h[r.url] || [])].slice(0, 30); writeJson('history.json', h); return before; };
+  const MAX_URLS = 100;
+  const remember = (r) => {
+    const h = read(); const before = (h[r.url] || [])[0] || null; h[r.url] = [r, ...(h[r.url] || [])].slice(0, 30);
+    // höchstens 100 Adressen aufheben (die zuletzt geprüften) – sonst wächst history.json ohne Ende
+    const keep = Object.entries(h).sort((a, b) => ((b[1][0] || {}).t || 0) - ((a[1][0] || {}).t || 0)).slice(0, MAX_URLS);
+    writeJson('history.json', Object.fromEntries(keep)); return before;
+  };
   const targets = () => {
     const out = [];
     for (const w of ctx.web ? ctx.web.list() : []) {
@@ -48,13 +56,21 @@ function activate(host) {
     for (const a of ctx.apps ? ctx.apps.list() : []) if (a.port) out.push({ label: `${a.name} (App)`, url: `http://localhost:${a.port}/`, app: a.id });
     return out;
   };
+  const recentOf = (h) => Object.entries(h).map(([url, list]) => ({ url, score: list[0] && list[0].score, t: list[0] && list[0].t })).sort((a, b) => (b.t || 0) - (a.t || 0)).slice(0, 20);
   const watch = (state, detail) => { try { if (host.watcher) host.watcher({ id: 'page-check', label: host.t('Page check'), state, detail, href: '#/ext/page-check' }); } catch { /* Wächter optional */ } };
 
   host.router.get('/page-check', (req, res) => {
     const h = read();
-    const recent = Object.entries(h).map(([url, list]) => ({ url, score: list[0] && list[0].score, t: list[0] && list[0].t })).sort((a, b) => (b.t || 0) - (a.t || 0)).slice(0, 20);
+    const recent = recentOf(h);
     const sites = Object.values(readJson('sites.json', {})).map(({ url, t, score, pages }) => ({ url, t, score, pages: (pages || []).length })).sort((a, b) => b.t - a.t).slice(0, 10);
     res.json({ recent, targets: targets(), config: config(), sites });
+  });
+  // Eine Adresse aus „Schon geprüft“ entfernen (samt ihrem Verlauf), z. B. nach einem Tippfehler
+  host.router.delete('/page-check/history', (req, res) => {
+    const url = String(req.query.url || ''); const h = read();
+    if (!h[url]) throw host.error(404, 'This address is not in the list.');
+    delete h[url]; writeJson('history.json', h);
+    res.json({ recent: recentOf(h) });
   });
   host.router.get('/page-check/history', (req, res) => res.json((read()[String(req.query.url || '')] || []).map(({ checks, broken, links, ...rest }) => rest))); // eslint-disable-line no-unused-vars
   host.router.post('/page-check/run', async (req, res) => {
@@ -69,7 +85,9 @@ function activate(host) {
     const max = Math.max(1, Math.min(100, Number((req.body || {}).max) || 20));
     const { runJob } = host.core('jobs');
     const job = runJob(host.t('Website check: {url}', { url }), async (j) => {
-      const r = await site(url, { max, onProgress: (n, of, u) => j.progress(Math.min(95, Math.round((n / of) * 90)), host.t('Checking {url} …', { url: u })) });
+      let r;
+      // Fehlertext übersetzt in die Aufgabenliste (sonst stand dort „Nothing answers …“ auf Englisch)
+      try { r = await site(url, { max, onProgress: (n, of, u) => j.progress(Math.min(95, Math.round((n / of) * 90)), host.t('Checking {url} …', { url: u })) }); } catch (e) { throw Object.assign(new Error(host.t(e.message)), { status: e.status }); }
       const all = readJson('sites.json', {});
       all[r.url] = r;
       // höchstens 10 Websites aufheben (die neuesten)
@@ -118,7 +136,10 @@ function activate(host) {
           watch('alert', text);
         } else watch('ok', host.t('{score} points – stable', { score: r.score }));
       }
-      writeJson('config.json', cfg);
+      // Nur Stand (letzte Prüfung, Punkte) zurückschreiben – was währenddessen gespeichert wurde, bleibt
+      const now = config();
+      now.schedules = now.schedules.map((x) => { const d = cfg.schedules.find((o) => o.url === x.url); return d ? { ...x, last: d.last, score: d.score } : x; });
+      writeJson('config.json', now);
     } finally { busy = false; }
   }
   if (!process.env.HW_TEST) {

@@ -22,4 +22,12 @@
 .pc-max { width: 5.5em; }
 .pc-min { width: 5.5em; }
 .pc-pages td { vertical-align: middle; }
-.pc-pages td:first-child { max-width: 320px; }
+.pc-pages td:first-child { max-width: 280px; }
+.pc-form-main { flex: 1 1 480px; min-width: 0; }
+/* „Schon geprüft“: Eintrag mit eigenem Entfernen-Knopf */
+.pc-chip { display: inline-flex; align-items: center; }
+.pc-chip .chip-btn { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.pc-chip-x { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; border: 1px solid var(--line); border-left: 0; border-radius: 0 var(--r-sm) var(--r-sm) 0; background: none; color: var(--muted); cursor: pointer; }
+.pc-chip-x:hover { color: var(--err); }
+.pc-copy { margin-top: var(--sp-1); }
+.pc-filter { flex-wrap: wrap; justify-content: space-between; }

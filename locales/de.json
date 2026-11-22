@@ -123,6 +123,14 @@
   "Page": "Seite",
   "How fast is the page, what do search engines see, can everyone use it and is it safe? With concrete tips.": "Wie schnell ist die Seite, was sehen Suchmaschinen, können alle sie bedienen und ist sie sicher? Mit konkreten Tipps.",
   "Save": "Speichern",
+  "Not compressed (small enough)": "Nicht komprimiert (klein genug)",
+  "Please leave user name and password out of the address.": "Bitte Benutzername und Passwort aus der Adresse weglassen.",
+  "This address does not return an HTML page (but e.g. an image, a download or data).": "Diese Adresse liefert keine HTML-Seite (sondern z. B. ein Bild, einen Download oder Daten).",
+  "This address is unknown – check the spelling (or the hosts entry of a local name).": "Diese Adresse ist unbekannt – prüfe die Schreibweise (oder den hosts-Eintrag eines lokalen Namens).",
+  "The certificate of this address is not trusted – the page check cannot read the page.": "Dem Zertifikat dieser Adresse wird nicht vertraut – der Seiten-Check kann die Seite nicht lesen.",
+  "The page redirects in a loop (too many redirects).": "Die Seite leitet im Kreis weiter (zu viele Weiterleitungen).",
+  "Status {status} · {ttfb} ms to the first byte · {total} ms in total · {kb} KB": "Status {status} · {ttfb} ms bis zum ersten Byte · {total} ms insgesamt · {kb} KB",
+  "Score over the last {n} checks": "Punkte der letzten {n} Prüfungen",
   "$patterns": [
     [
       "The page answers with status {}",
@@ -212,5 +220,18 @@
       "Referrer-Policy: {}",
       "Referrer-Policy: {}"
     ]
-  ]
+  ],
+  "Copy as report": "Als Bericht kopieren",
+  "Report copied (Markdown)": "Bericht kopiert (Markdown)",
+  "Could not copy": "Kopieren nicht möglich",
+  "Only failed checks": "Nur fehlgeschlagene Prüfungen",
+  "{n} of {all} need work": "{n} von {all} brauchen Arbeit",
+  "All checks passed": "Alle Prüfungen bestanden",
+  "Remove from the list": "Aus der Liste entfernen",
+  "Remove {url} from the list": "{url} aus der Liste entfernen",
+  "This address is not in the list.": "Diese Adresse steht nicht in der Liste.",
+  "Address": "Adresse",
+  "Checked": "Geprüft",
+  "Score": "Punkte",
+  "Website check": "Website-Check"
 }

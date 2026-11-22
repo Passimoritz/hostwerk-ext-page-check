@@ -65,3 +65,37 @@ test('due: daily and weekly schedules', () => {
   const now = Date.now();
   assert.deepStrictEqual(srvMod.due([{ url: 'a', every: 'day', last: now - 25 * 3600e3 }, { url: 'b', every: 'day', last: now - 3600e3 }, { url: 'c', every: 'week', last: now - 8 * 86400e3 }], now).map((x) => x.url), ['a', 'c']);
 });
+
+test('history: one address can be removed from "Checked before" (typo addresses), unknown → 404', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pc-'));
+  fs.mkdirSync(path.join(dir, 'page-check'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'page-check', 'history.json'), JSON.stringify({ 'http://tippfehler.locahost/': [{ url: 'http://tippfehler.locahost/', score: 0, t: 2 }], 'http://ok.localhost/': [{ url: 'http://ok.localhost/', score: 90, t: 1 }] }));
+  const h = fakeHost(dir);
+  srvMod.activate(h.host);
+  assert.strictEqual((await h.call('GET /page-check')).recent.length, 2);
+  const r = await h.call('DELETE /page-check/history', {}, { url: 'http://tippfehler.locahost/' });
+  assert.deepStrictEqual(r.recent.map((x) => x.url), ['http://ok.localhost/']);
+  assert.deepStrictEqual((await h.call('GET /page-check')).recent.map((x) => x.url), ['http://ok.localhost/']);
+  await assert.rejects(h.call('DELETE /page-check/history', {}, { url: 'http://nie.localhost/' }), (e) => e.status === 404);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('report helpers: size under 1 KB, Markdown report of a page and of a site', () => {
+  const { kbText, toMarkdown, siteMarkdown } = require('../ui/src/report.js');
+  assert.strictEqual(kbText(300), '< 1'); assert.strictEqual(kbText(0), '0'); assert.strictEqual(kbText(5000), '5');
+  const areas = [{ id: 'seo', label: 'Search engines' }, { id: 'speed', label: 'Speed' }];
+  const md = toMarkdown({ url: 'http://x.localhost/', title: 'Start | Shop', t: 1, score: 72, areas: { seo: 50, speed: 95 }, status: 200, ttfbMs: 3, totalMs: 9, bytes: 512, checks: [{ area: 'seo', ok: false, text: 'No description', tip: 'Add a meta description.' }, { area: 'seo', ok: true, text: 'Has a title' }, { area: 'speed', ok: true, text: 'Small page' }], broken: [{ url: 'http://x.localhost/a.png', status: 404 }] }, { areas, when: () => 'heute' });
+  assert.match(md, /^# Page check: Start \| Shop/);
+  assert.match(md, /\*\*72 \/ 100\*\* · Search engines 50 · Speed 95/);
+  assert.match(md, /< 1 KB/);
+  assert.match(md, /## Search engines \(50\)\n\n- ❌ No description {2}\n {2}Add a meta description\.\n- ✅ Has a title/);
+  assert.match(md, /## Broken links and images \(1\)\n\n- http:\/\/x\.localhost\/a\.png – 404/);
+  const smd = siteMarkdown({ url: 'http://x.localhost/', score: 80, found: 3, pages: [{ url: 'http://x.localhost/', title: 'A|B', score: 80, areas: { seo: 70 } }, { url: 'http://x.localhost/b', failed: 'timeout' }], broken: [] }, { areas });
+  assert.match(smd, /\| A\\\|B \| 80 \| 70 \| – \|/);
+  assert.match(smd, /\| http:\/\/x\.localhost\/b \| – \| – \| – \|/);
+});
+
+test('new texts have German', () => {
+  const de = require('../locales/de.json');
+  for (const s of ['Copy as report', 'Report copied (Markdown)', 'Only failed checks', '{n} of {all} need work', 'All checks passed', 'Remove from the list', 'Remove {url} from the list', 'This address is not in the list.', 'Page check', 'Address', 'Checked', 'Score', 'Website check', 'Page', 'Total', 'Broken links and images', 'No answer']) assert.ok(de[s], s);
+});
