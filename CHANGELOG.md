@@ -1,3 +1,9 @@
+## 1.2.0
+
+- Copy a result as a Markdown report, show only failed checks, remove an address from “Checked before”. / Ergebnis als Markdown-Bericht kopieren, nur fehlgeschlagene Prüfungen zeigen, Adresse aus „Schon geprüft“ entfernen.
+- More accurate checks: HTML entities and commented-out code, page encodings like Latin-1, robots.txt groups, clear messages for unknown addresses, certificates and redirect loops; downloads and images are not rated. / Genauere Prüfungen: HTML-Entities und auskommentierter Code, Seiten-Zeichensätze wie Latin-1, robots.txt-Gruppen, klare Meldungen bei unbekannter Adresse, Zertifikat und Weiterleitungsschleife; Downloads und Bilder werden nicht bewertet.
+- Fixed: Enter no longer switches the mode, no second check while one runs, tables fit at 1024 px, German error text in the task list; “Remove completely” also deletes the history and schedules. / Behoben: Enter schaltet den Modus nicht mehr um, keine zweite Prüfung während einer läuft, Tabellen passen bei 1024 px, deutscher Fehlertext in der Aufgabenliste; „Vollständig entfernen“ löscht auch Verlauf und Zeitpläne.
+
 ## 1.1.2
 
 - New animated icon and banner in the common Hostwerk style (isometric block). / Neues animiertes Symbol und Banner im gemeinsamen Hostwerk-Stil (isometrischer Block).

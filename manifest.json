@@ -9,7 +9,7 @@
     "de": "Prüft Seiten deiner Web-Projekte – einzeln oder die ganze Website: Ladezeit, Größe, Komprimierung, SEO (Titel, Beschreibung, Überschriften, robots.txt, Sitemap), Barrierefreiheit (Sprache, Bildtexte, Beschriftungen, Überschriften-Reihenfolge), Sicherheits-Kopfzeilen (HTTPS, HSTS, CSP …) und kaputte Links – mit Punktzahl, konkreten Tipps, Verlauf, regelmäßiger Prüfung und Mindestpunktzahl vor dem Veröffentlichen.",
     "en": "Checks pages of your web projects – one at a time or the whole website: load time, size, compression, SEO (title, description, headings, robots.txt, sitemap), accessibility (language, image texts, labels, heading order), security headers (HTTPS, HSTS, CSP …) and broken links – with a score, concrete tips, history, regular checks and a minimum score before publishing."
   },
-  "version": "1.1.2",
+  "version": "1.2.0",
   "author": "Hostwerk",
   "homepage": "https://github.com/Passimoritz/hostwerk-ext-page-check",
   "license": "MIT",
